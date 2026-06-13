@@ -65,10 +65,10 @@ async function getAcsSource(
 
 export function setupCatalogRoute(appkit: AppKitLike) {
   appkit.server.extend((app: Application) => {
-    app.get('/api/data-catalog', async (req: Request, res) => {
+    app.get('/api/data-catalog', async (_req: Request, res) => {
       try {
-        // Read on behalf of the signed-in user (who owns the synced tables)
-        const db = appkit.lakebase.asUser(req);
+        // Read as the app's service principal (granted SELECT on public.*) — no user consent needed.
+        const db = appkit.lakebase;
 
         // Fetch row counts + ACS source in parallel
         const [

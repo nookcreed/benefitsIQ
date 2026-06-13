@@ -54,8 +54,8 @@ export function setupExplainRoute(appkit: AppKitLike) {
         const body = (req.body ?? {}) as { profile?: Profile };
         const profile: Profile = body.profile ?? {};
 
-        // Read synced tables on behalf of the signed-in user (who owns them) — OBO.
-        const db = appkit.lakebase.asUser(req);
+        // Read synced tables as the app's service principal (granted SELECT on public.*).
+        const db = appkit.lakebase;
         const [progRes, ruleRes, fplRes] = await Promise.all([
           db.query('SELECT id,name,short_name,category,description,admin_agency FROM public.programs'),
           db.query('SELECT id,program_id,state,household_size,max_gross_monthly,max_net_monthly,max_pct_fpl,categorical_eligible,notes FROM public.eligibility_rules'),

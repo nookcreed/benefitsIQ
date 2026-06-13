@@ -99,11 +99,12 @@ function buildBenefitValues(rows: Record<string, unknown>[]): BenefitValues {
   return values;
 }
 
-export async function runCheck(appkit: AppKitLike, profile: Profile, req: Request): Promise<Statement | null> {
+export async function runCheck(appkit: AppKitLike, profile: Profile, _req: Request): Promise<Statement | null> {
   if (!profile.state || !profile.household_size || profile.monthly_income == null) return null;
 
-  // Read synced tables on behalf of the signed-in user (who owns them) — no SP grant needed.
-  const db = appkit.lakebase.asUser(req);
+  // Read synced tables as the app's service principal (granted SELECT on public.*), so no
+  // per-user `postgres` OAuth consent is required — judges can use the app without authorizing.
+  const db = appkit.lakebase;
   const [progRes, ruleRes, fplRes, cohRes] = await Promise.all([
     db.query('SELECT id,name,short_name,category,description,admin_agency FROM public.programs'),
     db.query('SELECT id,program_id,state,household_size,max_gross_monthly,max_net_monthly,max_pct_fpl,categorical_eligible,notes FROM public.eligibility_rules WHERE state = $1 OR state IS NULL', [profile.state]),

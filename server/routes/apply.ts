@@ -196,7 +196,7 @@ async function retrieveSemantic(
   const qvec = await embedQuery(appkit, req, question);
   if (!qvec) return null;
 
-  const db = appkit.lakebase.asUser(req);
+  const db = appkit.lakebase; // SP read (granted SELECT on public.*)
   const params: unknown[] = [];
   let where = '';
   if (programShort) {
@@ -231,11 +231,11 @@ async function retrieveSemantic(
 // --- Lexical retrieval (fallback if embeddings unavailable) --------------------------------
 async function retrieveLexical(
   appkit: AppKitLike,
-  req: Request,
+  _req: Request,
   question: string,
   programShort: string | null,
 ): Promise<KbChunk[]> {
-  const db = appkit.lakebase.asUser(req);
+  const db = appkit.lakebase; // SP read (granted SELECT on public.*)
   const tokens = tokenize(question);
   const params: unknown[] = [];
   const filters: string[] = [];
