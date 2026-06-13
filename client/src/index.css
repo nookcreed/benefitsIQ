@@ -1,0 +1,83 @@
+@import "@databricks/appkit-ui/styles.css";
+
+:root {
+  --radius: 0.625rem;
+  /* Calm, warm theme with deep treasury green primary */
+  --background: oklch(0.98 0.005 90); /* Warm off-white */
+  --foreground: oklch(0.2 0.01 150); /* Deep green-gray for text */
+  --card: oklch(1 0 0); /* Pure white cards */
+  --card-foreground: oklch(0.2 0.01 150);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 150);
+  --primary: oklch(0.35 0.08 160); /* Deep treasury green (#155C43 area) */
+  --primary-foreground: oklch(0.98 0 0); /* Off-white text on primary */
+  --secondary: oklch(0.94 0.005 90);
+  --secondary-foreground: oklch(0.3 0.01 150);
+  --muted: oklch(0.95 0.005 90); /* Subtle warm gray */
+  --muted-foreground: oklch(0.5 0.01 150);
+  --accent: oklch(0.55 0.22 25); /* Databricks red accent (#FF3621) */
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --success: oklch(0.5 0.12 160);
+  --success-foreground: oklch(0.98 0 0);
+  --warning: oklch(0.75 0.15 75);
+  --warning-foreground: oklch(0.2 0.02 240);
+  --border: oklch(0.88 0.005 90);
+  --input: oklch(0.88 0.005 90);
+  --ring: oklch(0.35 0.08 160);
+  --chart-1: oklch(0.35 0.08 160);
+  --chart-2: oklch(0.55 0.22 25);
+  --chart-3: oklch(0.6 0.12 200);
+  --chart-4: oklch(0.7 0.15 75);
+  --chart-5: oklch(0.5 0.1 300);
+  --sidebar: oklch(0.98 0.005 90);
+  --sidebar-foreground: oklch(0.2 0.01 150);
+  --sidebar-primary: oklch(0.35 0.08 160);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.94 0.005 90);
+  --sidebar-accent-foreground: oklch(0.3 0.01 150);
+  --sidebar-border: oklch(0.88 0.005 90);
+  --sidebar-ring: oklch(0.35 0.08 160);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.15 0.01 150);
+    --foreground: oklch(0.95 0.005 90);
+    --card: oklch(0.2 0.015 150);
+    --card-foreground: oklch(0.95 0.005 90);
+    --popover: oklch(0.2 0.015 150);
+    --popover-foreground: oklch(0.95 0.005 90);
+    --primary: oklch(0.5 0.12 160); /* Brighter treasury green for dark mode */
+    --primary-foreground: oklch(0.95 0 0);
+    --secondary: oklch(0.25 0.015 150);
+    --secondary-foreground: oklch(0.95 0 0);
+    --muted: oklch(0.25 0.015 150);
+    --muted-foreground: oklch(0.65 0.01 150);
+    --accent: oklch(0.6 0.24 25);
+    --accent-foreground: oklch(0.95 0 0);
+    --destructive: oklch(0.6 0.24 25);
+    --destructive-foreground: oklch(0.95 0 0);
+    --success: oklch(0.6 0.14 160);
+    --success-foreground: oklch(0.95 0 0);
+    --warning: oklch(0.8 0.17 80);
+    --warning-foreground: oklch(0.2 0.02 240);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.5 0.12 160);
+    --chart-1: oklch(0.5 0.12 160);
+    --chart-2: oklch(0.6 0.24 25);
+    --chart-3: oklch(0.65 0.14 200);
+    --chart-4: oklch(0.75 0.17 80);
+    --chart-5: oklch(0.55 0.12 300);
+    --sidebar: oklch(0.2 0.015 150);
+    --sidebar-foreground: oklch(0.95 0.005 90);
+    --sidebar-primary: oklch(0.5 0.12 160);
+    --sidebar-primary-foreground: oklch(0.95 0 0);
+    --sidebar-accent: oklch(0.25 0.015 150);
+    --sidebar-accent-foreground: oklch(0.95 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.5 0.12 160);
+  }
+}

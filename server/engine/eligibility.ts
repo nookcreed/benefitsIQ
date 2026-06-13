@@ -1,0 +1,171 @@
+// Deterministic eligibility engine — faithful TypeScript port of
+// benefitsiq/engine/eligibility.py. Pure functions, no I/O.
+
+import type {
+  Profile,
+  ProgramRow,
+  RuleRow,
+  FplRow,
+  EligibilityResult,
+  Confidence,
+  BenefitValues,
+} from './types';
+
+// Default benefit dollar values — the canonical fallback used when the
+// benefit_values table is absent. These are the values the engine has always
+// shipped, so behavior with defaults is identical to the previous hardcoded path.
+export const DEFAULT_BENEFIT_VALUES: BenefitValues = {
+  snap_max_monthly: {
+    1: 291, 2: 535, 3: 766, 4: 973, 5: 1155, 6: 1386, 7: 1532, 8: 1751,
+  },
+  snap_per_additional: 219,
+  wic_monthly_per_person: 50,
+  chip_annual_per_child: 3600,
+  nslp_annual_per_child: 900,
+};
+
+function snapAnnualValue(p: Profile, values: BenefitValues): number {
+  const size = p.household_size || 1;
+  if (size <= 8) return (values.snap_max_monthly[size] ?? 291) * 12;
+  return (values.snap_max_monthly[8] + (size - 8) * values.snap_per_additional) * 12;
+}
+
+function edgeCaseNotes(p: Profile, shortName: string): string | null {
+  if (p.recently_lost_job && (shortName === 'SNAP' || shortName === 'MEDICAID')) {
+    const weeks = p.job_loss_weeks_ago;
+    const when = weeks ? `${weeks} week(s) ago` : 'recently';
+    return (
+      `You mentioned losing your job ${when}. Use your current income (which may be $0) — ` +
+      `not your former salary — when applying. You may also qualify for expedited processing.`
+    );
+  }
+  return null;
+}
+
+function applyIncomeRule(
+  income: number,
+  rule: RuleRow,
+  fpl: FplRow | null,
+  incomeUncertain: boolean,
+): { eligible: boolean; confidence: Confidence; reason: string } {
+  let eligible: boolean;
+  let confidence: Confidence;
+  let reason: string;
+
+  if (rule.max_gross_monthly != null) {
+    const pct = income / rule.max_gross_monthly;
+    eligible = pct <= 1.0;
+    confidence = pct <= 0.9 ? 'likely' : 'borderline';
+    reason = `Monthly gross income $${Math.round(income).toLocaleString()} vs. limit $${Math.round(
+      rule.max_gross_monthly,
+    ).toLocaleString()} (${Math.round(pct * 100)}% of limit).`;
+  } else if (rule.max_pct_fpl != null && fpl) {
+    if (rule.max_pct_fpl === 0) {
+      return {
+        eligible: false,
+        confidence: 'unlikely',
+        reason: rule.notes || 'This state has not expanded eligibility to this population.',
+      };
+    }
+    const monthlyFpl = fpl.annual_amount / 12;
+    const actualPct = income > 0 ? income / monthlyFpl : 0;
+    eligible = actualPct <= rule.max_pct_fpl;
+    confidence = actualPct / rule.max_pct_fpl <= 0.9 ? 'likely' : 'borderline';
+    reason = `Income is ${Math.round(actualPct * 100)}% FPL; limit is ${Math.round(
+      rule.max_pct_fpl * 100,
+    )}% FPL.`;
+  } else {
+    return {
+      eligible: false,
+      confidence: 'requires_verification',
+      reason: 'Cannot evaluate — rule thresholds missing.',
+    };
+  }
+
+  if (!eligible) confidence = 'unlikely';
+  if (incomeUncertain && confidence === 'unlikely') {
+    confidence = 'requires_verification';
+    reason += ' Income was approximate — worth verifying with exact figures.';
+  }
+  return { eligible, confidence, reason };
+}
+
+export function evaluateProgram(
+  profile: Profile,
+  program: ProgramRow,
+  rules: RuleRow[],
+  fpl: FplRow | null,
+  values: BenefitValues = DEFAULT_BENEFIT_VALUES,
+): EligibilityResult {
+  const make = (
+    eligible: boolean,
+    confidence: Confidence,
+    reason: string,
+    annualValue: number | null = null,
+    notes: string | null = null,
+  ): EligibilityResult => ({
+    program_id: program.id,
+    program_name: program.name,
+    program_short_name: program.short_name,
+    eligible,
+    confidence,
+    reason,
+    estimated_annual_value: annualValue,
+    notes,
+  });
+
+  const sn = program.short_name;
+
+  // Household composition gates (before income)
+  if (sn === 'CHIP' && !profile.has_children)
+    return make(false, 'unlikely', 'CHIP covers children only — no children indicated in household.');
+  if (sn === 'WIC' && !(profile.has_young_children || profile.is_pregnant))
+    return make(false, 'unlikely', 'WIC is for pregnant women and children under 5 — neither indicated.');
+  if (sn === 'NSLP' && !profile.has_children)
+    return make(false, 'unlikely', 'NSLP is for school-age children (K-12) — no children indicated in household.');
+
+  if (!rules.length)
+    return make(false, 'requires_verification', 'No eligibility rules found for this state.');
+
+  const householdSize = profile.household_size || 1;
+  const rule =
+    rules.find((r) => r.household_size === householdSize) ||
+    rules.find((r) => r.household_size == null) ||
+    rules[0];
+
+  const income = profile.monthly_income;
+
+  if (rule.categorical_eligible && (profile.receives_tanf || profile.receives_ssi)) {
+    return make(
+      true,
+      'likely',
+      'Categorically eligible via TANF/SSI — income test does not apply.',
+      sn === 'SNAP' ? snapAnnualValue(profile, values) : null,
+    );
+  }
+
+  if (income == null)
+    return make(false, 'requires_verification', 'Income not provided — cannot evaluate.');
+
+  const { eligible, confidence, reason } = applyIncomeRule(
+    income,
+    rule,
+    fpl,
+    !!profile.income_uncertain,
+  );
+  const notes = edgeCaseNotes(profile, sn);
+
+  let annualValue: number | null = null;
+  if (eligible && sn === 'SNAP') annualValue = snapAnnualValue(profile, values);
+  else if (eligible && sn === 'CHIP')
+    annualValue = values.chip_annual_per_child * Math.max(1, (profile.household_size || 2) - 1);
+  else if (eligible && sn === 'WIC') {
+    const participants =
+      (profile.is_pregnant ? 1 : 0) +
+      (profile.has_young_children ? Math.max(1, (profile.household_size || 2) - 1) : 0);
+    annualValue = values.wic_monthly_per_person * participants * 12;
+  } else if (eligible && sn === 'NSLP')
+    annualValue = values.nslp_annual_per_child * Math.max(1, (profile.household_size || 2) - 1);
+
+  return make(eligible, confidence, reason, annualValue, notes);
+}

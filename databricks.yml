@@ -1,0 +1,40 @@
+bundle:
+  name: benefitsiq-app
+
+variables:
+  postgres_branch:
+    description: Full Lakebase Postgres branch resource name. Obtain by running `databricks postgres list-branches {project-name}`, select the desired item from the output array and use its .name value. Requires the project resource name.
+  postgres_database:
+    description: Full Lakebase Postgres database resource name. Obtain by running `databricks postgres list-databases {branch-name}`, select the desired item from the output array and use its .name value. Requires the branch resource name.
+  postgres_project:
+    description: Full Lakebase Postgres project resource name. Obtain by running `databricks postgres list-projects`, select the desired item from the output array and use its .name value.
+
+resources:
+  apps:
+    app:
+      name: "benefitsiq-app"
+      description: "BenefitsIQ — find the government benefits your family has earned"
+      source_code_path: ./
+      # OBO scopes: chat calls Model Serving; eligibility reads Lakebase synced tables as the user.
+      user_api_scopes:
+        - serving.serving-endpoints
+        - postgres
+
+      # The resources which this app has access to.
+      resources:
+        - name: postgres
+          postgres:
+            branch: ${var.postgres_branch}
+            database: ${var.postgres_database}
+            permission: CAN_CONNECT_AND_CREATE
+
+targets:
+  default:
+    default: true
+    workspace:
+      host: https://dbc-0c1fa2eb-48a1.cloud.databricks.com
+
+    variables:
+      postgres_branch: projects/benefitsiq/branches/production
+      postgres_database: projects/benefitsiq/branches/production/databases/databricks-postgres
+      postgres_project: projects/benefitsiq

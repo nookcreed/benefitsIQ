@@ -1,0 +1,8 @@
+command: ['npm', 'run', 'start']
+env:
+  - name: LAKEBASE_ENDPOINT
+    valueFrom: postgres
+  - name: DATABRICKS_SERVING_ENDPOINT_NAME
+    value: databricks-meta-llama-3-3-70b-instruct
+  - name: DATABRICKS_EMBEDDING_ENDPOINT_NAME
+    value: databricks-gte-large-en
