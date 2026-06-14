@@ -166,12 +166,12 @@ function cosine(a: number[], b: number[]): number {
 
 async function embedQuery(
   appkit: AppKitLike,
-  req: Request,
+  _req: Request,
   text: string,
 ): Promise<number[] | null> {
   try {
     const resp = await withTimeout(
-      appkit.serving('embed').asUser(req).invoke({ input: text }),
+      appkit.serving('embed').invoke({ input: text }), // SP context (FM endpoints are workspace-queryable)
       12000,
       'embed',
     );
@@ -364,7 +364,6 @@ export function setupApplyRoute(appkit: AppKitLike) {
           const resp = await withTimeout(
             appkit
               .serving('default')
-              .asUser(req)
               .invoke({
                 messages: [
                   { role: 'system', content: SYS },

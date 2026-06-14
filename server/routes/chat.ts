@@ -145,7 +145,6 @@ export function setupChatRoute(appkit: AppKitLike) {
         try {
           const resp = await appkit
             .serving('default')
-            .asUser(req)
             .invoke({
               messages: [
                 { role: 'system', content: SYS },
