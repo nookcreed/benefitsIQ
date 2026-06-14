@@ -1,5 +1,7 @@
 # BenefitsIQ
 
+[![CI](https://github.com/nookcreed/benefitsIQ/actions/workflows/ci.yml/badge.svg)](https://github.com/nookcreed/benefitsIQ/actions/workflows/ci.yml)
+
 **Find the government benefits your family has already earned — in plain language, with zero hallucinated eligibility.**
 
 Every year, **over $60 billion in U.S. government benefits goes unclaimed** — SNAP, Medicaid, CHIP, WIC, LIHEAP, school meals. Not because families don't qualify, but because eligibility is fragmented across dozens of agencies, written in bureaucratic language, and nobody tells you what you've left on the table. A general chatbot can't fix this: ask ChatGPT "do I qualify for SNAP?" and it will *guess* — confidently, and sometimes wrong. For a benefits decision, a confident wrong answer is worse than no answer.
