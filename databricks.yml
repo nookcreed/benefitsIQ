@@ -48,7 +48,7 @@ resources:
       tags:
         project: benefitsiq
         cadence: annual
-        data_sources: "fpl,snap,medicaid,chip"
+        data_sources: "fpl+snap+medicaid+chip"
 
       # Serverless — no persistent cluster for a job that runs ~1-2x/year.
       environments:
